@@ -18,18 +18,8 @@ public class PaymentEventListener {
     }
 
     @KafkaListener(topics = "order-created", groupId = "payment-group")
-    public void handleOrderCreated(ConsumerRecord<String, String> record) {
-        try {
-            OrderCreatedEvent event = objectMapper.readValue(record.value(), OrderCreatedEvent.class);
-            paymentService.processPayment(event);
-        } catch (Exception e) {
-            System.err.println("Retry exhausted or unrecoverable error: " + e.getMessage());
-            try {
-                OrderCreatedEvent failedEvent = objectMapper.readValue(record.value(), OrderCreatedEvent.class);
-                paymentService.publishFailureEvent(failedEvent.getOrderId());
-            } catch (Exception ex) {
-                System.err.println("Error publishing failure event: " + ex.getMessage());
-            }
-        }
+    public void handleOrderCreated(ConsumerRecord<String, String> record) throws Exception {
+        OrderCreatedEvent event = objectMapper.readValue(record.value(), OrderCreatedEvent.class);
+        paymentService.processPayment(event); // Let exception propagate
     }
 }
